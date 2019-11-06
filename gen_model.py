@@ -4,12 +4,14 @@
 Train ML to recognize notes from input sound
 
 Created on Sun Nov  3 18:12:29 2019
+Last updated November 5 2019
 
 @author: Ben Walsh
 
 TO DO
 - Extract FFT features
-- Try 3 notes/classes
+- Try 4 notes/classes
+- import music_dict from another file
 
 """
 
@@ -29,12 +31,46 @@ from noise_util import add_noise
 
 #%% Generate pure sine waves
 
+mus_dict = {
+        'D2': 73.42,
+        'E2': 82.41,
+        'F2': 87.31,
+        'G2': 98.00,
+        'A2': 110.00,
+        'B2': 123.47,
+        'C3': 130.81,
+        'D3': 146.83,
+        'E3': 164.81,
+        'F3': 174.61,
+        'G3': 196.00,
+        'A3': 220.00,
+        'B3': 246.94,
+        'C4': 261.63,
+        'D4': 293.66,
+        'E4': 329.63,
+        'F4': 349.23,
+        'G4': 392.00,
+        'A4': 440.00,
+        'B4': 493.88,
+        'C5': 523.25,
+        'D5': 587.33,
+        'E5': 659.25,
+        'F5': 698.46,
+        'G5': 783.99
+}
+
 t_len = 0.1 # seconds
-f1 = 200 # in Hz
+notes = ['C4','E4','G4']
+f1 = mus_dict[notes[0]] 
 tone1 = tone(f1,t_len)
 
-f2 = 282 # in Hz
+f2 = mus_dict[notes[1]]
 tone2 = tone(f2,t_len)
+
+f3 = mus_dict[notes[2]]
+tone3 = tone(f3,t_len)
+
+tone_classes = [tone1.sin_wave, tone2.sin_wave, tone3.sin_wave]
 
 #%% Plot waveform
 
@@ -61,17 +97,15 @@ plt.title('Sine wave at ' + str(tone2.f0) + ' hz')
 
 # Declare number of entries
 n_entries = 100
-n_class = 2
+n_class = len(tone_classes)
 
 # Initialize matrix where each row contains a sine wave
 X = np.empty((n_entries*n_class,len(tone1.sin_wave)))
 
 # Add white noise to each element
-for sample in range(n_entries):
-    X[sample,:] = add_noise(tone1.sin_wave)
-
-for sample in range(n_entries):
-    X[sample+n_entries,:] = add_noise(tone2.sin_wave)
+for idx, tone_class in enumerate(tone_classes):
+    for sample in range(n_entries):
+        X[sample+n_entries*(idx),:] = add_noise(tone_class)
     
 #%% Plot example with added noise
 plt.plot(t_array/tone1.fs,X[0,:])
@@ -105,8 +139,14 @@ X = X[:,:100]
 
 # Training truth labels
 y = np.empty((n_entries*n_class,1))
-y[:n_entries] = '200'
-y[n_entries:n_entries*2] = '282'
+
+#for idx, note in enumerate(notes):
+#    y[n_entries*(idx):n_entries*(idx+1)]=note
+
+y[:n_entries] = '1'#f1
+y[n_entries:n_entries*2] = '2'#f2
+y[n_entries*2:n_entries*3] = '3'#f3
+
 
 #%% Implement ML model
 
