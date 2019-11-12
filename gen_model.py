@@ -4,13 +4,14 @@
 Train ML to recognize notes from input sound
 
 Created on Sun Nov  3 18:12:29 2019
-Last updated November 7 2019
+Last updated November 11 2019
 
 @author: Ben Walsh
 
 TO DO
 - Extract FFT features
 - Try a more advanced algorithm
+- Expand to a 2nd octave
 
 """
 
@@ -23,6 +24,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import tree
 from sklearn.metrics import accuracy_score
+
+# Pickle to save model
+import pickle
 
 # Custom library to make tones
 from make_tone import tone, music_dict
@@ -101,10 +105,14 @@ plt.title('Sine wave at ' + str(tones[0].f0) + ' hz with noise')
 X = X[:,:200]
 
 # Training truth labels
-y = np.empty((n_entries*n_class,1))
+#y = np.empty((n_entries*n_class,1))
+y = []
 
 for idx, note in enumerate(notes):
-    y[n_entries*(idx):n_entries*(idx+1)]=str(idx)
+    #y[n_entries*(idx):n_entries*(idx+1)]=str(idx)
+    for idx in range(n_entries):
+        y.append(note)
+    #y.append([note]*n_entries)
 
 #%% Implement ML model
 
@@ -122,3 +130,10 @@ y_predict = model.predict(X_test)
 
 # See accuracy on test set
 print("Accuracy on test set "+str(100*accuracy_score(y_test, y_predict)))
+
+#%% Save model for later
+
+# save the model to disk
+modelName = './model.sav'
+pickle.dump(model, open(modelName, 'wb'))
+ 
