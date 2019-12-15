@@ -32,6 +32,9 @@ from sklearn.model_selection import train_test_split
 from sklearn import tree
 from sklearn.metrics import accuracy_score
 
+# Try with SVMs
+from sklearn import svm
+
 # Pickle to save model
 import pickle
 
@@ -43,7 +46,8 @@ from noise_util import add_noise
 
 # Custom library with tone information
 # (Shouldn't have to be in make_tone)
-from make_tone import music_dict
+# Use new music_dict from liloquy-git... separate from piano part?
+from make_tone import freq_dict
 from ml_utils import music_feat_extract
 
 #%% Load hummed notes
@@ -119,7 +123,7 @@ plt.show()
 print('Expanding dataset by adding random shifts and noise...')
 
 # Declare number of entries
-n_entries = 100
+n_entries = 10
 
 # Initialize matrix where each row contains a noisy sample
 X = np.empty((n_entries*n_class,hum_len))
@@ -140,7 +144,7 @@ plt.title('Hummed C note with noise')
 
 print('Extracting FFT features...')
 
-X_feat = music_feat_extract(X,fs_in_C,music_dict)
+X_feat = music_feat_extract(X,fs_in_C,freq_dict)
   
 #%% Create training dataset
 
@@ -162,8 +166,11 @@ X_train, X_test, y_train, y_test = train_test_split(X_feat, y, random_state=1)
 # Note: With expanded features, max_features and max_leaf_nodes had to be set to
 #  length of feature space
 # Performance still was low until max_depth was increased
-model = tree.DecisionTreeClassifier(max_depth=5,
-            max_features=len(notes), max_leaf_nodes=len(notes), random_state=1)
+#model = tree.DecisionTreeClassifier(max_depth=5,
+#            max_features=len(notes), max_leaf_nodes=len(notes), random_state=1)
+# Note: Decision Tree was not generalizing to new recording
+# After feature exploration, found that it was overfitting to an incorrect feature extraction
+model = svm.SVC()
 # Fit model to training set
 model.fit(X_train, y_train)
 
