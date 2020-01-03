@@ -11,12 +11,14 @@ Last updated December 3 2019
 for liloquy
 
 TO DO
-- Try a more advanced/robust algorithm
 - Expand features / notes used: 
     B3
     sharps
-    another octave
+  [ ]  another octave
 - Efficient windowing/FFT
+[ ] Enhance feature extraction so C3/C4 works 
+    - feat_notes = ('C3', 'D3', 'E3', 'F3', 'G3', 'A3') - #this works
+    - feat_notes = ('C4', 'D4', 'E4', 'F4', 'G4', 'A4') - #this should work
 
 """
 
@@ -29,10 +31,9 @@ import numpy as np
 
 # ML with sci-kit learn
 from sklearn.model_selection import train_test_split
-from sklearn import tree
 from sklearn.metrics import accuracy_score
 
-# Try with SVMs
+# SVMs for ML algorithm
 from sklearn import svm
 
 # Pickle to save model
@@ -48,70 +49,72 @@ from noise_util import add_noise
 # (Shouldn't have to be in make_tone)
 # Use new music_dict from liloquy-git... separate from piano part?
 from make_tone import freq_dict
-from ml_utils import music_feat_extract
+
+# Custom ML library to extract music features and use hum_signals class
+from ml_utils import music_feat_extract, hum_signals
 
 #%% Load hummed notes
 
 print('Loading recorded notes for training...')
 
 t_len = 1 # seconds
-notes = ['C4','D4','E4','F4','G4','A4']#,'B4']
 
-c_hum = r".\sound_files\Hum_C4.wav"
-fs_in_C, C_sig_in = wav.read(c_hum)
+#notes = ('D3','E3','F3','G3','A3','C4','D4','E4','F4','G4','A4')
+notes = ('C4', 'D4', 'E4', 'F4', 'G4', 'A4')
 
-d_hum = r".\sound_files\Hum_D4.wav"
-fs_in_D, D_sig_in = wav.read(d_hum)
-
-e_hum = r".\sound_files\Hum_E4.wav"
-fs_in_E, E_sig_in = wav.read(e_hum)
-
-f_hum = r".\sound_files\Hum_F4.wav"
-fs_in_F, F_sig_in = wav.read(f_hum)
-
-g_hum = r".\sound_files\Hum_G4.wav"
-fs_in_G, G_sig_in = wav.read(g_hum)
-
-a_hum = r".\sound_files\Hum_A4.wav"
-fs_in_A, A_sig_in = wav.read(a_hum)
+# Define hum_training object based on input list of notes
+hum_training = hum_signals(notes)
 
 # Number of notes
-n_class = len(notes)
+n_class = len(hum_training.hums.keys())
+
+#c_hum = r".\sound_files\Hum_C4.wav"
+#fs_in_C, C_sig_in = wav.read(c_hum)
+
+# Enforce consistent length of inputs. Should be integrated with t_len
 hum_len = 130000
 hums = np.empty((n_class,hum_len))
-hums[0,:] = C_sig_in[:hum_len,1]
-hums[1,:] = D_sig_in[:hum_len,1]
-hums[2,:] = E_sig_in[:hum_len,1]
-hums[3,:] = F_sig_in[:hum_len,1]
-hums[4,:] = G_sig_in[:hum_len,1]
-hums[5,:] = A_sig_in[:hum_len,1]
 
-#%% Plot waveform
+# Initialize truth labels
+y=[]
+
+# Declare number of entries to synthesize additional samples
+n_entries = 10
+
+# Build truth labels and create hums matrix
+for idx, note in enumerate(hum_training.hums.keys()):
+    hums[idx,:] = hum_training.hums[note].signal[:hum_len,1]
+    for idx in range(n_entries):
+        y.append(note)
+
+#%% Plot waveform to illustrate an example
+test_note = 'C4'
+fs = hum_training.hums[test_note].fs
 
 # Create array of time samples
-t_array_len = hums[0,:].shape[0]
+t_array_len = hums[notes.index(test_note),:].shape[0]
 t_array = np.arange(t_array_len)
 
 # Plot waveform over short time period to see sine
 plt.subplot(121)
-plt.plot(t_array/fs_in_C,hums[0,:])
+plt.plot(t_array/fs,hums[notes.index(test_note),:])
 plt.xlim(0.2 ,0.8)
 plt.xlabel('Time (s)')
-plt.title('Hummed C note ')#at ' + str(tones[0].f0) + ' hz')
+plt.title('Hummed {}: {} hz'.format(test_note,freq_dict[test_note]))
 
 plt.subplot(122)
-plt.plot(t_array/fs_in_C,hums[0,:])
+plt.plot(t_array/fs,hums[notes.index(test_note),:])
 plt.xlim(0.5 ,0.55)
 plt.xlabel('Time (s)')
-plt.title('Hummed C note ')#at ' + str(tones[0].f0) + ' hz')
+plt.title('Hummed {}: {} hz'.format(test_note,freq_dict[test_note]))
 
 #%% Plot FFT
 
-ftransform = np.fft.fft(hums[4,:])/len(hums[0,:])
+ftransform = np.fft.fft(hums[0,:])/len(hums[0,:])
 ftransform = ftransform[range(int(len(hums[0,:])/2))]
 tp_count = len(hums[0,:])
 vals = np.arange(int(tp_count)/2)
-t_period = tp_count/fs_in_C
+t_period = tp_count/fs
 freqs = vals/t_period
 
 plt.plot(freqs,abs(ftransform))
@@ -122,9 +125,6 @@ plt.show()
 
 print('Expanding dataset by adding random shifts and noise...')
 
-# Declare number of entries
-n_entries = 10
-
 # Initialize matrix where each row contains a noisy sample
 X = np.empty((n_entries*n_class,hum_len))
 
@@ -134,7 +134,7 @@ for idx in range(n_class):
         X[sample+n_entries*(idx),:] = add_noise(hums[idx,:])
     
 #%% Plot example with added noise
-plt.plot(t_array/fs_in_C,X[0,:])
+plt.plot(t_array/fs,X[0,:])
 plt.show
 plt.xlim(0.5 ,0.55)
 plt.xlabel('Time (s)')
@@ -144,16 +144,11 @@ plt.title('Hummed C note with noise')
 
 print('Extracting FFT features...')
 
-X_feat = music_feat_extract(X,fs_in_C,freq_dict)
-  
-#%% Create training dataset
+# Ideally this should be equal to 'notes'
+feat_notes = ('C3', 'D3', 'E3', 'F3', 'G3', 'A3')
+#feat_notes = ('C4', 'D4', 'E4', 'F4', 'G4', 'A4')
 
-# Training truth labels
-y = []
-
-for idx, note in enumerate(notes):
-    for idx in range(n_entries):
-        y.append(note)
+X_feat = music_feat_extract(X,fs,freq_dict,feat_notes)
 
 #%% Implement ML model
 
@@ -182,7 +177,6 @@ print("Accuracy on test set "+str(100*accuracy_score(y_test, y_predict)))
 
 #%% Save model for later
 
-# save the model to disk
 modelName = './model.sav'
 pickle.dump(model, open(modelName, 'wb'))
  
