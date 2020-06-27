@@ -14,7 +14,7 @@ import numpy as np
 
 #%%
 
-def music_feat_extract(data, fs, freq_dict, feat_notes):
+def music_feat_ext(data, fs, freq_dict, feat_notes):
     
     # Find index corresponding to each note of interest
     # For now just take note of C, D and E
