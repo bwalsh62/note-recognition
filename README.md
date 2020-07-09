@@ -1,3 +1,7 @@
 # note-recognition
 
-See \notebooks\example_workflow.ipynb for demo walking through data loading, exploration, feature extraction, model definition and model training
+
+Folder | Description
+---|----
+model | Contains trained model
+notebooks | Contains example workflow showing data loading, exploration, feature extraction, model definition and model training

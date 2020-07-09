@@ -84,7 +84,6 @@ class hum_signal:
         self.signal = signal
         self.wav_file = hum_dict[note]
     
-    
 class hum_signals(hum_signal):
     
     def __init__(self, notes = ('C4','D4','E4','F4','G4','A4')):        
