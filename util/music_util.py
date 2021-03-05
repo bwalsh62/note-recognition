@@ -2,6 +2,7 @@
 """
 Created on Sat Jun 27 18:41:02 2020
 
+
 @author: Ben Walsh
 For Liloquy
 """
@@ -53,3 +54,4 @@ freq_dict = {
 def add_noise(in_array,ampl=0.5):
     out_array = in_array + ampl*normal(0,1,len(in_array))
     return out_array
+

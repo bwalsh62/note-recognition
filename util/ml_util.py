@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov 23 21:01:32 2019
-
-@author: benja
-
 Music feature extraction used by gen_model_hum.py to train ML model
+... and other utility functions
+
+TO DO
+- Generalize path / add PATH variable for training_data files
+- load_training_data does not need both train_len and t_len
+
+(C) 2021 Ben Walsh <ben@liloquy.io>
 
 """
 
 #%% Import libraries
 
 import numpy as np
+from scipy.io import wavfile as wav
 
 #%%
 
-def music_feat_ext(data, fs, freq_dict, feat_notes):
+def feat_extract(data, fs, freq_dict, feat_notes):
     
     # Find index corresponding to each note of interest
     # For now just take note of C, D and E
@@ -55,12 +59,7 @@ def music_feat_ext(data, fs, freq_dict, feat_notes):
 
 #%% Training class
 
-# Generalize path / add PATH variable
-
-# Scipy to read wav files
-from scipy.io import wavfile as wav
-
-hum_dict = {
+training_data = {
         'D3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D3.wav",
         'E3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E3.wav",
         'F3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F3.wav",
@@ -74,19 +73,50 @@ hum_dict = {
         'A4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A4.wav"
 }
 
-class hum_signal:
+class signal:
     
-    def __init__(self, note = 'C4'):        
+    def __init__(self, note='C4'):        
         self.note = note 
-        fs, signal = wav.read(hum_dict[note])
+        fs, signal = wav.read(training_data[note])
         self.fs = fs
         self.signal = signal
-        self.wav_file = hum_dict[note]
+        self.wav_file = training_data[note]
     
-class hum_signals(hum_signal):
+class signals(signal):
     
-    def __init__(self, notes = ('C4','D4','E4','F4','G4','A4')):        
-        self.hums = dict()
+    def __init__(self, notes=('C4','D4','E4','F4','G4','A4')):        
+        self.signals = dict()
         for note in notes:
-            self.hums[note] = hum_signal(note)
+            self.signals[note] = signal(note)
+        self.notes = len(set(notes))
+            
+#%%
+
+def load_training_data(notes = ('C4', 'D4', 'E4')):
+
+    t_len = 2.5 # seconds
+    
+    # Define hum_training object based on input list of notes
+    training_data = signals(notes)
+    
+    # Assume constant fs and take the first note's fs
+    fs = training_data.signals[notes[0]].fs
+    
+    # Number of notes
+    n_class = training_data.notes
+    
+    # Enforce consistent length of inputs. Should be integrated with t_len
+    train_len = 130000 # in ms
+    X = np.empty((n_class, train_len))
+    
+    # Initialize truth labels
+    y=[]
+    
+    
+    # Build truth labels and create hums matrix
+    for idx, note in enumerate(notes): 
+        X[idx,:] = training_data.signals[note].signal[:train_len,1]
+        y.append(note)
+    
+    return X, y
     
