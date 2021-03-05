@@ -60,6 +60,20 @@ plt.xlim(0 ,0.05)
 plt.xlabel('Time (s)')
 plt.title('Sine wave at ' + str(tones[1].f0) + ' hz')
 
+#%% Plot FFT
+
+sig_test = tones[0].sin_wave
+ftransform = np.fft.fft(sig_test)/len(sig_test)
+ftransform = ftransform[range(int(len(sig_test)/2))]
+tp_count = len(sig_test)
+vals = np.arange(int(tp_count)/2)
+t_period = tp_count/tones[0].fs
+freqs = vals/t_period
+
+plt.plot(freqs,abs(ftransform))
+plt.xlim((0,400))
+plt.show()
+
 #%% Create dataset by adding random shifts and noise
 
 # Declare number of entries
