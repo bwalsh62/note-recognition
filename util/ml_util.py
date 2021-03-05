@@ -24,7 +24,6 @@ def music_feat_ext(data, fs, freq_dict, feat_notes):
     t_period = tp_count/fs
     freqs = vals/t_period
     
-#    feat_notes = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3']
     center_indices = []
     
     for feat_note in feat_notes:
