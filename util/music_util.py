@@ -14,7 +14,7 @@ from numpy.random import normal
 #%% Frequency dictionary
 #   Dictionary of frequencies (Hz) for musical notes
 
-freq_dict = {
+note_to_freq = {
         'D2': 73.42,
         'E2': 82.41,
         'F2': 87.31,

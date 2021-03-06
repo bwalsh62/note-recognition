@@ -118,5 +118,5 @@ def load_training_data(notes = ('C4', 'D4', 'E4')):
         X[idx,:] = training_data.signals[note].signal[:train_len,1]
         y.append(note)
     
-    return X, y
+    return X, y, fs
     
