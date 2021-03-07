@@ -2,9 +2,14 @@
 """
 Created on Sat Jun 27 18:41:02 2020
 
-
 @author: Ben Walsh
 For Liloquy
+
+TO DO
+- Add optional time shifts to add_noise function
+
+(C) 2021 Ben Walsh <ben@liloquy.io>
+
 """
 
 #%% Import libraries
@@ -51,7 +56,7 @@ note_to_freq = {
 # Usage: noisy_array1 = add_noise(array1)
 # Useful for synthesizing additional data while training model
 
-def add_noise(in_array,ampl=0.5):
+def add_noise(in_array, ampl=0.5):
     out_array = in_array + ampl*normal(0,1,len(in_array))
     return out_array
 
