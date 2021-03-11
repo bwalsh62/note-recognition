@@ -14,9 +14,12 @@ TO DO
 #%% Import libraries
 
 import numpy as np
+import pandas as pd
 from scipy.io import wavfile as wav
 
 #%%
+# Usage: X_train = feat_extract(data, fs, freq_dict, feat_notes)
+# Output X_train is a DataFrame with feat_notes as columns
 
 def feat_extract(data, fs, freq_dict, feat_notes):
     
@@ -55,7 +58,7 @@ def feat_extract(data, fs, freq_dict, feat_notes):
             print('Feat extract: sample {}/{}'.format(idx+1,data.shape[0]))
             
     # Return features   
-    return features
+    return pd.DataFrame(features, columns=feat_notes)
 
 #%% Training class
 
