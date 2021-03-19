@@ -76,7 +76,7 @@ sound_dict = {
 
 #%% Try to combine into class
 
-class note_class:
+class Note:
     
     fs = 44100  # Sampling frequency in Hz
     
