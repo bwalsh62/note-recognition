@@ -109,12 +109,11 @@ def load_training_data(notes = ('C4', 'D4', 'E4')):
     n_class = training_data.notes
     
     # Enforce consistent length of inputs. Should be integrated with t_len
-    train_len = 130000 # in ms
+    train_len = int(t_len*fs) #130000 # in ms
     X = np.empty((n_class, train_len))
     
     # Initialize truth labels
     y=[]
-    
     
     # Build truth labels and create hums matrix
     for idx, note in enumerate(notes): 
