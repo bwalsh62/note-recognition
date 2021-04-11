@@ -24,7 +24,7 @@ module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-from util.music_util import note_to_freq
+# from util.music_util import note_to_freq
 
 #%%
 mixer.init()
@@ -76,13 +76,15 @@ sound_dict = {
 
 #%% Try to combine into class
 
-class Note:
+# MOVING TO music_util
+
+# class Note:
     
-    fs = 44100  # Sampling frequency in Hz
+#     fs = 44100  # Sampling frequency in Hz
     
-    def __init__(self, note, instr='piano'):        
-        #self.f0 = f0 # frequency in Hz
-        self.note = note # Example C4
-        self.f0 = note_to_freq[note]
-        self.instr = instr
-        self.sound = sound_dict[note]
+#     def __init__(self, note, instr='piano'):        
+#         #self.f0 = f0 # frequency in Hz
+#         self.note = note # Example C4
+#         self.f0 = note_to_freq[note]
+#         self.instr = instr
+#         self.sound = sound_dict[note]
