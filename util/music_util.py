@@ -15,8 +15,16 @@ TO DO
 #%% Import libraries
 
 from pygame import mixer
+import numpy as np
 from numpy.random import normal
 import os
+import sys
+
+# Add custom modules to path
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+from util.ml_util import feat_extract
 
 #%% Frequency dictionary
 #   Dictionary of frequencies (Hz) for musical notes
@@ -74,12 +82,18 @@ LIB_NOTES = ('C4',
              'Bb4',
              'B4')
 
+# Initialize dictionary to look up wav file paths for each note
+lib_note_path = {}
+
 for lib_note in LIB_NOTES:
-    lib_note_path = os.path.join(MUSIC_FPATH,"Piano_{}_2p4s.wav".format(lib_note))
-    if os.path.exists(lib_note_path):
-        note_to_sound[lib_note] = mixer.Sound(lib_note_path)
+
+    # Build dictionary
+    lib_note_path[lib_note] = os.path.join(MUSIC_FPATH,"Piano_{}_2p4s.wav".format(lib_note))
+
+    if os.path.exists(lib_note_path[lib_note]):
+        note_to_sound[lib_note] = mixer.Sound(lib_note_path[lib_note])
     else:
-        print("{} does not exist".format(lib_note_path))
+        print("{} does not exist".format(lib_note_path[lib_note]))
 
 #%% add_noise function
 # Usage: noisy_array1 = add_noise(array1)
@@ -89,7 +103,47 @@ def add_noise(in_array, ampl=0.5):
     out_array = in_array + ampl*normal(0,1,len(in_array))
     return out_array
 
-#%% Class to define notes to playback with associated metadata
+#%% melody_transcribe function
+# Usage: predicted_notes = melody_transcribe(melody, model)
+# Outputs array of notes e.g. ['C4', 'E4'] based on 
+# input melody and predictive model
+# 
+# Example:
+# fs, wav_signal = wav.read(hum_wav_file)
+# predicted_notes = melody_transcribe(melody=wav_signal, fs, model, note_len, SCALE)
+
+def melody_transcribe(melody, fs, model, note_len, scale):
+    
+    # Estimate note_total by rounding the input note_len to length of input melody
+    note_total = np.int(melody.shape[0]/note_len)
+    
+    # Initialize matrix of notes
+    notes = np.empty((note_total, note_len))
+    for note_idx in range(note_total):
+        # Take single dimension to simplify dual-channel recording
+        notes[note_idx,:] = melody[note_len*note_idx:note_len*(note_idx+1),1]
+
+    X_feat = feat_extract(notes, fs, note_to_freq, scale)
+    
+    predicted_notes = model.predict(X_feat)
+    
+    return predicted_notes
+
+#%% Append individual note wav files into a single wav file according to the
+#     input notes
+def write_melody(notes, fname='melody.wav'):
+    
+    for idx, note in enumerate(notes):
+        if idx==0:
+            # Initialize wav_file with first note
+            melody_wav = lib_note_path[note]
+        elif idx>0:
+            # Append next note with original wav file
+            melody_wav = wav_append(melody_wav, lib_note_path[note])
+    
+    return mixer.Sound(melody_wav)
+
+#%% Class to define note to playback with associated metadata
 
 class Note:
     
@@ -97,8 +151,21 @@ class Note:
     
     def __init__(self, note, instr='piano'):        
         #self.f0 = f0 # frequency in Hz
-        self.note = note # Example C4
+        self.note = note # Example 'C4'
         self.f0 = note_to_freq[note]
         self.instr = instr
         self.sound = note_to_sound[note]
+
+#%% Class to define notes to playback with associated metadata
+
+class Melody:
+    
+    fs = 44100  # Sampling frequency in Hz
+    
+    def __init__(self, notes, instr='piano'):        
+        #self.f0 = f0 # frequency in Hz
+        self.notes = notes # Example ['C4', 'E4']
+        self.freqs = [note_to_freq[note] for note in notes]
+        self.instr = instr
+        self.sound = write_melody[notes]
         
