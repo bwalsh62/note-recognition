@@ -20,6 +20,8 @@ from numpy.random import normal
 import os
 import sys
 
+import wave
+
 # Add custom modules to path
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
@@ -129,9 +131,46 @@ def melody_transcribe(melody, fs, model, note_len, scale):
     
     return predicted_notes
 
+#%% wav_file_append function
+# Usage: wav_file_concat = wav_file_concat(wav_file1, wav_file2, merge_name='./concat.wav')
+
+def wav_concat(wav_file1, wav_file2, merge_name='./concat.wav'):
+    
+    # Error checking to wav_file_in existence
+    if not(os.path.exists(wav_file1)):
+        print('Input file does not exist: {}'.format(wav_file1))
+    if not(os.path.exists(wav_file2)):
+        print('Input file does not exist: {}'.format(wav_file2))
+    
+    # Read first wav file
+    obj = wave.open(wav_file1,'r')
+    n_frames1 = obj.getnframes()
+    wav1_data = obj.readframes(n_frames1)
+    n_channels = obj.getnchannels()
+    samp_width = obj.getsampwidth()
+    fs = obj.getframerate()
+    obj.close()
+
+    # Read second wav file
+    obj = wave.open(wav_file2,'r')
+    n_frames2 = obj.getnframes()
+    wav2_data = obj.readframes(n_frames2)
+    obj.close()
+    
+    # Write new wav file
+    obj = wave.open(merge_name,'wb')
+    obj.setnframes(n_frames1+n_frames2)
+    obj.setnchannels(n_channels)
+    obj.setsampwidth(samp_width)
+    obj.setframerate(fs)
+    obj.writeframes(wav1_data+wav2_data) 
+    obj.close()
+        
+    return merge_name
+
 #%% Append individual note wav files into a single wav file according to the
 #     input notes
-def write_melody(notes, fname='melody.wav'):
+def melody_write(notes, fname='melody.wav'):
     
     for idx, note in enumerate(notes):
         if idx==0:
@@ -139,7 +178,7 @@ def write_melody(notes, fname='melody.wav'):
             melody_wav = lib_note_path[note]
         elif idx>0:
             # Append next note with original wav file
-            melody_wav = wav_append(melody_wav, lib_note_path[note])
+            melody_wav = wav_concat(melody_wav, lib_note_path[note], fname)
     
     return mixer.Sound(melody_wav)
 
@@ -167,5 +206,5 @@ class Melody:
         self.notes = notes # Example ['C4', 'E4']
         self.freqs = [note_to_freq[note] for note in notes]
         self.instr = instr
-        self.sound = write_melody[notes]
+        self.sound = melody_write[notes]
         
