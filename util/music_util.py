@@ -114,16 +114,24 @@ def add_noise(in_array, ampl=0.5):
 # fs, wav_signal = wav.read(hum_wav_file)
 # predicted_notes = melody_transcribe(melody=wav_signal, fs, model, note_len, SCALE)
 
-def melody_transcribe(melody, fs, model, note_len, scale):
+def melody_transcribe(melody, fs, model, note_len, scale, debug=False):
     
     # Estimate note_total by rounding the input note_len to length of input melody
-    note_total = np.int(melody.shape[0]/note_len)
+    note_total = np.int(round(melody.shape[0]/note_len))
+    if debug:
+        print('note_total = {}'.format(note_total))
+        print('melody.shape = {}'.format(melody.shape))
+        print('note_len = {}'.format(note_len))
+    
+    # Pad melody array so length is consistent
+    melody_padded = np.zeros((note_len*note_total,))
+    # Take single dimension to simplify dual-channel recording
+    melody_padded[:len(melody)] = melody[:,1]
     
     # Initialize matrix of notes
     notes = np.empty((note_total, note_len))
     for note_idx in range(note_total):
-        # Take single dimension to simplify dual-channel recording
-        notes[note_idx,:] = melody[note_len*note_idx:note_len*(note_idx+1),1]
+        notes[note_idx,:] = melody_padded[note_len*note_idx:note_len*(note_idx+1)]
 
     X_feat = feat_extract(notes, fs, note_to_freq, scale)
     
