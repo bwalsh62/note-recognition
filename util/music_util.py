@@ -69,6 +69,7 @@ note_to_freq = {
 mixer.init()
 
 MUSIC_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\piano-gui\music_files\piano"
+HUM_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files"
 
 note_to_sound = {}
 LIB_NOTES = ('C4',
@@ -90,12 +91,21 @@ lib_note_path = {}
 for lib_note in LIB_NOTES:
 
     # Build dictionary
-    lib_note_path[lib_note] = os.path.join(MUSIC_FPATH,"Piano_{}_2p4s.wav".format(lib_note))
+    lib_note_path[lib_note] = {}
+    lib_note_path[lib_note]['piano'] = os.path.join(MUSIC_FPATH,"Piano_{}_2p4s.wav".format(lib_note))
+    lib_note_path[lib_note]['hum'] = os.path.join(HUM_FPATH,"Hum_{}.wav".format(lib_note))
 
-    if os.path.exists(lib_note_path[lib_note]):
-        note_to_sound[lib_note] = mixer.Sound(lib_note_path[lib_note])
+    note_to_sound[lib_note] = {}
+    
+    if os.path.exists(lib_note_path[lib_note]['piano']):
+        note_to_sound[lib_note]['piano'] = mixer.Sound(lib_note_path[lib_note]['piano'])
     else:
-        print("{} does not exist".format(lib_note_path[lib_note]))
+        print("{} does not exist".format(lib_note_path[lib_note]['piano']))
+    
+    if os.path.exists(lib_note_path[lib_note]['hum']):
+        note_to_sound[lib_note]['hum'] = mixer.Sound(lib_note_path[lib_note]['hum'])
+    else:
+        print("{} does not exist".format(lib_note_path[lib_note]['hum']))
 
 #%% add_noise function
 # Usage: noisy_array1 = add_noise(array1)
@@ -124,14 +134,33 @@ def melody_transcribe(melody, fs, model, note_len, scale, debug=False):
         print('note_len = {}'.format(note_len))
     
     # Pad melody array so length is consistent
-    melody_padded = np.zeros((note_len*note_total,))
+    melody_clean = np.zeros((note_len*note_total,))
     # Take single dimension to simplify dual-channel recording
-    melody_padded[:len(melody)] = melody[:,1]
+    melody_single_ch = melody[:,1]
+    
+    if len(melody_single_ch)<=len(melody_clean):
+        melody_clean[:len(melody)] = melody_single_ch
+    else:
+        if debug:
+            print('len(melody_single_ch) = {}'.format(len(melody_single_ch)))
+        # Truncate melody if longer than expected
+        note_samp_to_drop = np.int((len(melody_single_ch) - len(melody_clean))/note_total)
+        if debug:
+            print('note_samp_to_drop = {}'.format(note_samp_to_drop))
+        note_input_len = np.int(round(len(melody_single_ch)/note_total))
+        for note_idx in range(note_total):
+            try:
+                melody_clean[note_len*note_idx:note_len*(note_idx+1)] = \
+                    melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop]
+            except:
+                # Account for odd rounding
+                melody_clean[note_len*note_idx:note_len*(note_idx+1)] = \
+                    melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop-1]
     
     # Initialize matrix of notes
     notes = np.empty((note_total, note_len))
     for note_idx in range(note_total):
-        notes[note_idx,:] = melody_padded[note_len*note_idx:note_len*(note_idx+1)]
+        notes[note_idx,:] = melody_clean[note_len*note_idx:note_len*(note_idx+1)]
 
     X_feat = feat_extract(notes, fs, note_to_freq, scale)
     
@@ -178,15 +207,18 @@ def wav_concat(wav_file1, wav_file2, merge_name='./concat.wav'):
 
 #%% Append individual note wav files into a single wav file according to the
 #     input notes
-def melody_write(notes, fname='melody.wav'):
+def melody_write(notes, instr='piano', fname='melody.wav'):
+    
+    # hum_wav_file = fr"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_{note}.wav"
+    # fs_in, wav_sig_in = wav.read(hum_wav_file)
     
     for idx, note in enumerate(notes):
         if idx==0:
             # Initialize wav_file with first note
-            melody_wav = lib_note_path[note]
+            melody_wav = lib_note_path[note][instr]
         elif idx>0:
             # Append next note with original wav file
-            melody_wav = wav_concat(melody_wav, lib_note_path[note], fname)
+            melody_wav = wav_concat(melody_wav, lib_note_path[note][instr], fname)
     
     return mixer.Sound(melody_wav)
 
@@ -201,7 +233,7 @@ class Note:
         self.note = note # Example 'C4'
         self.f0 = note_to_freq[note]
         self.instr = instr
-        self.sound = note_to_sound[note]
+        self.sound = note_to_sound[note][instr]
 
 #%% Class to define notes to playback with associated metadata
 
