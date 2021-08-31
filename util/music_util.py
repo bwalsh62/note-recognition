@@ -14,19 +14,29 @@ TO DO
 
 #%% Import libraries
 
-from pygame import mixer
 import numpy as np
 from numpy.random import normal
 import os
 import sys
+import time
 
 import wave
+
+import sounddevice as sd
+from scipy.io import wavfile as wav
+from pygame import mixer
 
 # Add custom modules to path
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
 from util.ml_util import feat_extract
+
+#%% Define constants
+
+MUSIC_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\piano-gui\music_files\piano"
+HUM_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files"
+REC_FILE_NAME = "./record_sound.wav"
 
 #%% Frequency dictionary
 #   Dictionary of frequencies (Hz) for musical notes
@@ -67,9 +77,6 @@ note_to_freq = {
 #%% Define saved notes
 
 mixer.init()
-
-MUSIC_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\piano-gui\music_files\piano"
-HUM_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files"
 
 note_to_sound = {}
 LIB_NOTES = ('C4',
@@ -221,6 +228,22 @@ def melody_write(notes, instr='piano', fname='melody.wav'):
             melody_wav = wav_concat(melody_wav, lib_note_path[note][instr], fname)
     
     return mixer.Sound(melody_wav)
+
+#%% Record sound for melody transcription
+
+def melody_record(note_total=2, note_len_time=2, file_name=REC_FILE_NAME, fs=44100):
+
+    # Samples in a note = the samples/second * time   
+    note_len_n_samples = int(fs * note_len_time)
+
+    # Record for data points = number of notes * data points / note
+    # Convert to lower precision for consistent 16-bit PCM WAV format
+    rec_sound = sd.rec(note_total*note_len_n_samples, samplerate=fs, channels=2, dtype='int16')
+
+    time.sleep(note_total*note_len_n_samples/fs)
+    wav.write(REC_FILE_NAME, fs, rec_sound)
+
+    return rec_sound
 
 #%% Class to define note to playback with associated metadata
 
