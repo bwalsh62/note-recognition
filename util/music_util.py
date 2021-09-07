@@ -212,23 +212,6 @@ def wav_concat(wav_file1, wav_file2, merge_name='./concat.wav'):
         
     return merge_name
 
-#%% Append individual note wav files into a single wav file according to the
-#     input notes
-def melody_write(notes, instr='piano', fname='melody.wav'):
-    
-    # hum_wav_file = fr"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_{note}.wav"
-    # fs_in, wav_sig_in = wav.read(hum_wav_file)
-    
-    for idx, note in enumerate(notes):
-        if idx==0:
-            # Initialize wav_file with first note
-            melody_wav = lib_note_path[note][instr]
-        elif idx>0:
-            # Append next note with original wav file
-            melody_wav = wav_concat(melody_wav, lib_note_path[note][instr], fname)
-    
-    return mixer.Sound(melody_wav)
-
 #%% Record sound for melody transcription
 
 def melody_record(note_total=2, note_len_time=2, file_name=REC_FILE_NAME, fs=44100):
@@ -259,15 +242,27 @@ class Note:
         self.sound = note_to_sound[note][instr]
 
 #%% Class to define notes to playback with associated metadata
-
 class Melody:
     
     fs = 44100  # Sampling frequency in Hz
-    
-    def __init__(self, notes, instr='piano'):        
-        #self.f0 = f0 # frequency in Hz
+  
+    def __init__(self, notes, instr='piano', fname='melody.wav'):        
         self.notes = notes # Example ['C4', 'E4']
         self.freqs = [note_to_freq[note] for note in notes]
         self.instr = instr
-        self.sound = melody_write[notes]
-        
+        self.fname = fname
+        self.sound = melody_write(self)
+
+#%% Append individual note wav files into a single wav file 
+#   according to the input notes
+def melody_write(self):
+    
+    for idx, note in enumerate(self.notes):
+        if idx==0:
+            # Initialize wav_file with first note
+            melody_wav = lib_note_path[note][self.instr]
+        elif idx>0:
+            # Append next note with original wav file
+            melody_wav = wav_concat(melody_wav, lib_note_path[note][self.instr], self.fname)
+    
+    return mixer.Sound(melody_wav)  
