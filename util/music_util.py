@@ -131,17 +131,17 @@ def add_noise(in_array, ampl=0.5):
 # fs, wav_signal = wav.read(hum_wav_file)
 # predicted_notes = melody_transcribe(melody=wav_signal, fs, model, note_len, SCALE)
 
-def melody_transcribe(melody, fs, model, note_len, scale, debug=False):
+def melody_transcribe(melody, fs, model, note_samp_len, scale, debug=False):
     
     # Estimate note_total by rounding the input note_len to length of input melody
-    note_total = np.int(round(melody.shape[0]/note_len))
+    note_total = np.int(round(melody.shape[0]/note_samp_len))
     if debug:
         print('note_total = {}'.format(note_total))
         print('melody.shape = {}'.format(melody.shape))
-        print('note_len = {}'.format(note_len))
+        print('note_samp_len = {}'.format(note_samp_len))
     
     # Pad melody array so length is consistent
-    melody_clean = np.zeros((note_len*note_total,))
+    melody_clean = np.zeros((note_samp_len*note_total,))
     # Take single dimension to simplify dual-channel recording
     melody_single_ch = melody[:,1]
     
@@ -161,13 +161,13 @@ def melody_transcribe(melody, fs, model, note_len, scale, debug=False):
                     melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop]
             except:
                 # Account for odd rounding
-                melody_clean[note_len*note_idx:note_len*(note_idx+1)] = \
+                melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
                     melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop-1]
     
     # Initialize matrix of notes
-    notes = np.empty((note_total, note_len))
+    notes = np.empty((note_total, note_samp_len))
     for note_idx in range(note_total):
-        notes[note_idx,:] = melody_clean[note_len*note_idx:note_len*(note_idx+1)]
+        notes[note_idx,:] = melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)]
 
     X_feat = feat_extract(notes, fs, note_to_freq, scale)
     
