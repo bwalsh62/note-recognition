@@ -157,7 +157,7 @@ def melody_transcribe(melody, fs, model, note_samp_len, scale, debug=False):
         note_input_len = np.int(round(len(melody_single_ch)/note_total))
         for note_idx in range(note_total):
             try:
-                melody_clean[note_len*note_idx:note_len*(note_idx+1)] = \
+                melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
                     melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop]
             except:
                 # Account for odd rounding
