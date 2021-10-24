@@ -34,8 +34,8 @@ from util.ml_util import feat_extract
 
 #%% Define constants
 
-MUSIC_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\piano-gui\music_files\piano"
-HUM_FPATH = r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files"
+MUSIC_FPATH = r"..\1_audio\piano"
+HUM_FPATH = r"..\1_audio\hum"
 REC_FILE_NAME = "./record_sound.wav"
 
 #%% Frequency dictionary
@@ -99,7 +99,7 @@ for lib_note in LIB_NOTES:
 
     # Build dictionary
     lib_note_path[lib_note] = {}
-    lib_note_path[lib_note]['piano'] = os.path.join(MUSIC_FPATH,"Piano_{}_2p4s.wav".format(lib_note))
+    lib_note_path[lib_note]['piano'] = os.path.join(MUSIC_FPATH,"Piano_{}.wav".format(lib_note))
     lib_note_path[lib_note]['hum'] = os.path.join(HUM_FPATH,"Hum_{}.wav".format(lib_note))
 
     note_to_sound[lib_note] = {}
