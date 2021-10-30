@@ -24,22 +24,24 @@ module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
     
-from util import DATA_FOLDER, MODEL_FOLDER
+from util import AUDIO_FOLDER, DATA_FOLDER, MODEL_FOLDER
 
 #%% Define constants
 
+train_type = 'hum' # hard-coded for now, may grow in the future
+
 training_data = {
-        'D3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D3.wav",
-        'E3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E3.wav",
-        'F3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F3.wav",
-        'G3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G3.wav",
-        'A3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A3.wav",
-        'C4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_C4.wav",
-        'D4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D4.wav",
-        'E4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E4.wav",
-        'F4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F4.wav",
-        'G4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G4.wav",
-        'A4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A4.wav"
+        'D3': os.path.join(AUDIO_FOLDER, train_type, "{}_D3.wav".format(train_type)),
+        'E3': os.path.join(AUDIO_FOLDER, train_type, "{}_E3.wav".format(train_type)),
+        'F3': os.path.join(AUDIO_FOLDER, train_type, "{}_F3.wav".format(train_type)),
+        'G3': os.path.join(AUDIO_FOLDER, train_type, "{}_G3.wav".format(train_type)),
+        'A3': os.path.join(AUDIO_FOLDER, train_type, "{}_A3.wav".format(train_type)),
+        'C4': os.path.join(AUDIO_FOLDER, train_type, "{}_C4.wav".format(train_type)),
+        'D4': os.path.join(AUDIO_FOLDER, train_type, "{}_D4.wav".format(train_type)),
+        'E4': os.path.join(AUDIO_FOLDER, train_type, "{}_E4.wav".format(train_type)),
+        'F4': os.path.join(AUDIO_FOLDER, train_type, "{}_F4.wav".format(train_type)),
+        'G4': os.path.join(AUDIO_FOLDER, train_type, "{}_G4.wav".format(train_type)),
+        'A4': os.path.join(AUDIO_FOLDER, train_type, "{}_A4.wav".format(train_type))
 }
 
 #%%

@@ -12,6 +12,7 @@ import os
 
 #%%
 
+AUDIO_FOLDER = r"../1_audio"
 DATA_FOLDER = r"../3_data"
 MODEL_FOLDER = r"../4_model"
 
