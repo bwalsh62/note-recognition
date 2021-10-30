@@ -37,6 +37,7 @@ from util.ml_util import feat_extract
 MUSIC_FPATH = r"..\1_audio\piano"
 HUM_FPATH = r"..\1_audio\hum"
 REC_FILE_NAME = "./record_sound.wav"
+DATA_FOLDER = r"../3_data"
 
 #%% Frequency dictionary
 #   Dictionary of frequencies (Hz) for musical notes
