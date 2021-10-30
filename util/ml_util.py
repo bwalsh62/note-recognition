@@ -16,6 +16,31 @@ TO DO
 import numpy as np
 import pandas as pd
 from scipy.io import wavfile as wav
+import os
+import sys
+
+# Add custom modules to path
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
+from util import DATA_FOLDER, MODEL_FOLDER
+
+#%% Define constants
+
+training_data = {
+        'D3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D3.wav",
+        'E3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E3.wav",
+        'F3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F3.wav",
+        'G3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G3.wav",
+        'A3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A3.wav",
+        'C4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_C4.wav",
+        'D4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D4.wav",
+        'E4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E4.wav",
+        'F4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F4.wav",
+        'G4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G4.wav",
+        'A4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A4.wav"
+}
 
 #%%
 # Usage: X_train = feat_extract(data, fs, freq_dict, feat_notes)
@@ -61,20 +86,6 @@ def feat_extract(data, fs, freq_dict, feat_notes):
     return pd.DataFrame(features, columns=feat_notes)
 
 #%% Training class
-
-training_data = {
-        'D3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D3.wav",
-        'E3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E3.wav",
-        'F3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F3.wav",
-        'G3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G3.wav",
-        'A3': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A3.wav",
-        'C4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_C4.wav",
-        'D4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_D4.wav",
-        'E4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_E4.wav",
-        'F4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_F4.wav",
-        'G4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_G4.wav",
-        'A4': r"C:\Users\benja\OneDrive\Documents\Python\liloquy-git\note-recognition\sound_files\Hum_A4.wav"
-}
 
 class signal:
     
