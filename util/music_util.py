@@ -32,10 +32,12 @@ if module_path not in sys.path:
     sys.path.append(module_path)
 from util.ml_util import feat_extract
 
+from util import AUDIO_FOLDER
+
 #%% Define constants
 
-MUSIC_FPATH = r"..\1_audio\piano"
-HUM_FPATH = r"..\1_audio\hum"
+PIANO_FPATH = os.path.join(AUDIO_FOLDER, "piano") 
+HUM_FPATH = os.path.join(AUDIO_FOLDER, "hum")
 REC_FILE_NAME = "./record_sound.wav"
 
 #%% Frequency dictionary
@@ -99,7 +101,7 @@ for lib_note in LIB_NOTES:
 
     # Build dictionary
     lib_note_path[lib_note] = {}
-    lib_note_path[lib_note]['piano'] = os.path.join(MUSIC_FPATH,"Piano_{}.wav".format(lib_note))
+    lib_note_path[lib_note]['piano'] = os.path.join(PIANO_FPATH,"Piano_{}.wav".format(lib_note))
     lib_note_path[lib_note]['hum'] = os.path.join(HUM_FPATH,"Hum_{}.wav".format(lib_note))
 
     note_to_sound[lib_note] = {}
@@ -170,6 +172,9 @@ def melody_transcribe(melody, fs, model, note_samp_len, scale, debug=False):
         notes[note_idx,:] = melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)]
 
     X_feat = feat_extract(notes, fs, note_to_freq, scale)
+    
+    if debug:
+        print(X_feat.head())
     
     predicted_notes = model.predict(X_feat)
     
