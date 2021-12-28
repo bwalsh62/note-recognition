@@ -12,6 +12,8 @@ import os
 
 #%%
 
+SCALE = ('C4', 'D4', 'E4', 'F4', 'G4', 'A4')
+
 AUDIO_FOLDER = r"../1_audio"
 DATA_FOLDER = r"../3_data"
 MODEL_FOLDER = r"../4_model"

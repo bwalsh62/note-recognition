@@ -124,6 +124,18 @@ def add_noise(in_array, ampl=0.5):
     out_array = in_array + ampl*normal(0,1,len(in_array))
     return out_array
 
+#%% add_timeshifts function
+# Usage: shifted_array1 = add_noise(array1)
+# Useful for synthesizing additional data while training model
+
+def add_timeshifts(in_array, samp_shift_max=100, debug=False):
+    prepad_len = np.int(np.random.uniform(high=samp_shift_max))
+    if debug:
+        print('Shape of input array = {}'.format(in_array.shape))
+        print('Input samp_shift_max = {}'.format(samp_shift_max))
+        print('Random prepad_len = {}'.format(prepad_len))
+    return np.concatenate([np.zeros(prepad_len,),in_array[:-prepad_len]])
+
 #%% melody_transcribe function
 # Usage: predicted_notes = melody_transcribe(melody, model)
 # Outputs array of notes e.g. ['C4', 'E4'] based on 
