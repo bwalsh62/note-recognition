@@ -245,6 +245,15 @@ def melody_record(note_total=2, note_len_time=2, file_name=REC_FILE_NAME, fs=441
 
     return rec_sound
 
+#%% Record and write melody
+
+def melody_rec_write(model, scale, note_total=2, note_len_time=2, file_name=REC_FILE_NAME, debug=False):
+        _ = melody_record(note_total=note_total, note_len_time=note_len_time, file_name=file_name)
+        fs, wav_signal = wav.read(file_name)
+        predictions = melody_transcribe(wav_signal, fs, model, note_len_time*fs, scale, debug=debug)
+        melody_predict = Melody(notes=predictions)
+        return melody_predict
+
 #%% Class to define note to playback with associated metadata
 
 class Note:
