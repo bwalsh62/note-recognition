@@ -18,6 +18,7 @@ import pandas as pd
 from scipy.io import wavfile as wav
 import os
 import sys
+from time import perf_counter
 
 # Add custom modules to path
 module_path = os.path.abspath(os.path.join('..'))
@@ -48,44 +49,71 @@ training_data = {
 # Usage: X_train = feat_extract(data, fs, freq_dict, feat_notes)
 # Output X_train is a DataFrame with feat_notes as columns
 
-def feat_extract(data, fs, freq_dict, feat_notes):
-    
-    # Find index corresponding to each note of interest
-    # For now just take note of C, D and E
-    
-    tp_count = len(data[0,:])
-    vals = np.arange(int(tp_count)/2)
-    t_period = tp_count/fs
-    freqs = vals/t_period
-    
-    center_indices = []
-    
-    for feat_note in feat_notes:
-        center_indices.append(abs(freqs-freq_dict[feat_note]).argmin())
-    
-    # Window width to extract power around center frequencies
-    window_width = 2
-    
-    # Extract features
-    
-    features = np.empty((data.shape[0],len(feat_notes)))
-    for idx, sample in enumerate(data):
-        # Integrate over band for each note
-        ftransform = np.fft.fft(sample)/len(sample)
-        ftransform = ftransform[range(int(len(sample)/2))]
-        
-        for feat_idx,center_idx in enumerate(center_indices):
-            features[idx,feat_idx] = abs(ftransform)[center_idx-window_width:center_idx+window_width].sum()
+def feat_extract(data, fs, freq_dict, feat_notes, debug=False):
      
-        # Normalize features in each sample
-        features[idx,:] = features[idx,:]/features[idx,:].sum()
+    # Start the stopwatch 
+    t1_start = perf_counter()
+    
+    #-------------
+    #TODO - redo with MFCCs?
+    # from python_speech_features import mfcc
+    from python_speech_features import logfbank
+
+    # mfcc_feat = mfcc(data[0,:], fs, nfft=1200)
+    # fbank_feat = logfbank(data[0,:], fs, nfft=1200)
+    
+    # fbank_feat.sum(axis=0).shape
+    #
+    #
+    NFILT = 26
+    feat_names = ['mfcc_logfbank_{}'.format(idx) for idx in range(NFILT)]
+    features = np.empty((data.shape[0], NFILT))
+    
+    for idx, sample in enumerate(data):
+        # take log filter bank of MFCC and sum over time as feature
+        features[idx,:] = logfbank(sample, fs, nfft=1200, nfilt=NFILT).sum(axis=0)
+    
+    #------------------
+    
+    # # # Window width to extract power around center frequencies
+    # WIN_WIDTH = 2
+    
+    # # Find index corresponding to each note of interest
+    # tp_count = len(data[0,:])
+    # vals = np.arange(int(tp_count)/2)
+    # t_period = tp_count/fs
+    # freqs = vals/t_period
+    
+    # center_indices = [abs(freqs-freq_dict[note]).argmin() for note in feat_notes]
         
-        # Print progress
-        if (idx+1) % 100 == 0:
-            print('Feat extract: sample {}/{}'.format(idx+1,data.shape[0]))
-            
+    # # Extract features
+    
+    # features = np.empty((data.shape[0],len(feat_notes)))
+    # for idx, sample in enumerate(data):
+    #     # Integrate over band for each note
+    #     ftransform = np.fft.fft(sample)/len(sample)
+    #     ftransform = ftransform[range(int(len(sample)/2))]
+        
+    #     #TODO - make this more efficient without a for loop 
+    #     for feat_idx,center_idx in enumerate(center_indices):
+    #         features[idx,feat_idx] = abs(ftransform)[center_idx-WIN_WIDTH:center_idx+WIN_WIDTH].sum()
+     
+    #     # Normalize features in each sample
+    #     features[idx,:] = features[idx,:]/features[idx,:].sum()
+        
+    #     # Print progress
+    #     if debug:
+    #         if (idx+1) % 100 == 0:
+    #             print('Feat extract: sample {}/{}'.format(idx+1,data.shape[0]))
+        
+    if debug:
+        t1_stop = perf_counter()
+        print("Feature extraction processing time = {:.3f}".format(t1_stop-t1_start))
+        
     # Return features   
-    return pd.DataFrame(features, columns=feat_notes)
+    # return pd.DataFrame(features, columns=feat_notes)
+    return pd.DataFrame(data=features, columns=feat_names)
+
 
 #%% Training class
 

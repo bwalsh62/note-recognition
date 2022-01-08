@@ -3,12 +3,12 @@
 Created on Sat Jun 27 18:41:02 2020
 
 @author: Ben Walsh
-For Liloquy
+For Bnaura
 
 TO DO
-- Add optional time shifts to add_noise function
+- Visualize timer when recording
 
-(C) 2021 Ben Walsh <ben@liloquy.io>
+(C) 2021 Ben Walsh <ben@bnaura.com>
 
 """
 
@@ -25,6 +25,8 @@ import wave
 import sounddevice as sd
 from scipy.io import wavfile as wav
 from pygame import mixer
+
+from xgboost.sklearn import XGBRegressor
 
 # Add custom modules to path
 module_path = os.path.abspath(os.path.join('..'))
@@ -145,7 +147,7 @@ def add_timeshifts(in_array, samp_shift_max=100, debug=False):
 # fs, wav_signal = wav.read(hum_wav_file)
 # predicted_notes = melody_transcribe(melody=wav_signal, fs, model, note_len, SCALE)
 
-def melody_transcribe(melody, fs, model, note_samp_len, scale, debug=False):
+def melody_transcribe(melody, fs, model, note_samp_len, scale, xgb_encoder=None, debug=False):
     
     # Estimate note_total by rounding the input note_len to length of input melody
     note_total = np.int(round(melody.shape[0]/note_samp_len))
@@ -190,6 +192,9 @@ def melody_transcribe(melody, fs, model, note_samp_len, scale, debug=False):
     
     predicted_notes = model.predict(X_feat)
     
+    if isinstance(model, XGBRegressor):
+        predicted_notes = xgb_encoder.inverse_transform([round(pred) for pred in predicted_notes])
+ 
     return predicted_notes
 
 #%% wav_file_append function
@@ -229,6 +234,15 @@ def wav_concat(wav_file1, wav_file2, merge_name='./concat.wav'):
         
     return merge_name
 
+#%% Visualize timer
+
+def viz_timer(note_total=1, note_t_len=1):
+    
+    for note in range(note_total):
+        for t_interval in range(4):
+            print(''.join(['**']*t_interval) + ''.join(['--']*(4-t_interval)))
+            time.sleep(note_t_len*0.25)
+
 #%% Record sound for melody transcription
 
 def melody_record(note_total=2, note_len_time=2, file_name=REC_FILE_NAME, fs=44100):
@@ -240,17 +254,23 @@ def melody_record(note_total=2, note_len_time=2, file_name=REC_FILE_NAME, fs=441
     # Convert to lower precision for consistent 16-bit PCM WAV format
     rec_sound = sd.rec(note_total*note_len_n_samples, samplerate=fs, channels=2, dtype='int16')
 
-    time.sleep(note_total*note_len_n_samples/fs)
+    # time.sleep(note_total*note_len_n_samples/fs)
+    
+    viz_timer(note_total=note_total, note_t_len=note_len_time)
+    
     wav.write(REC_FILE_NAME, fs, rec_sound)
 
     return rec_sound
 
 #%% Record and write melody
 
-def melody_rec_write(model, scale, note_total=2, note_len_time=2, file_name=REC_FILE_NAME, debug=False):
+def melody_rec_write(model, scale, note_total=2, note_len_time=2, file_name=REC_FILE_NAME, 
+                     xgb_encoder=None, debug=False):
         _ = melody_record(note_total=note_total, note_len_time=note_len_time, file_name=file_name)
         fs, wav_signal = wav.read(file_name)
-        predictions = melody_transcribe(wav_signal, fs, model, note_len_time*fs, scale, debug=debug)
+        predictions = melody_transcribe(wav_signal, fs, model, 
+                                        note_len_time*fs, scale, 
+                                        xgb_encoder=xgb_encoder,debug=debug)
         melody_predict = Melody(notes=predictions)
         return melody_predict
 
