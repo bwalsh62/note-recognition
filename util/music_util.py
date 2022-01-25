@@ -84,17 +84,18 @@ mixer.init()
 
 note_to_sound = {}
 LIB_NOTES = ('C4',
-             'Db4', 
+             # 'Db4', 
              'D4', 
-             'Eb4', 
+             # 'Eb4', 
              'E4', 
              'F4', 
-             'Gb4', 
+             # 'Gb4', 
              'G4', 
-             'Ab4',
+             # 'Ab4',
              'A4', 
-             'Bb4',
-             'B4')
+             # 'Bb4',
+             # 'B4')
+            )
 
 # Initialize dictionary to look up wav file paths for each note
 lib_note_path = {}
@@ -136,7 +137,11 @@ def add_timeshifts(in_array, samp_shift_max=100, debug=False):
         print('Shape of input array = {}'.format(in_array.shape))
         print('Input samp_shift_max = {}'.format(samp_shift_max))
         print('Random prepad_len = {}'.format(prepad_len))
-    return np.concatenate([np.zeros(prepad_len,),in_array[:-prepad_len]])
+    # Accoount for special case of prepad_len = 0
+    if prepad_len == 0:
+        return in_array
+    else:
+        return np.concatenate([np.zeros(prepad_len,),in_array[:-prepad_len]])
 
 #%% melody_transcribe function
 # Usage: predicted_notes = melody_transcribe(melody, model)
@@ -150,7 +155,7 @@ def add_timeshifts(in_array, samp_shift_max=100, debug=False):
 def melody_transcribe(melody, fs, model, note_samp_len, scale, xgb_encoder=None, debug=False):
     
     # Estimate note_total by rounding the input note_len to length of input melody
-    note_total = np.int(round(melody.shape[0]/note_samp_len))
+    note_total = np.int(np.floor(melody.shape[0]/note_samp_len))
     if debug:
         print('note_total = {}'.format(note_total))
         print('melody.shape = {}'.format(melody.shape))
@@ -158,6 +163,7 @@ def melody_transcribe(melody, fs, model, note_samp_len, scale, xgb_encoder=None,
     
     # Pad melody array so length is consistent
     melody_clean = np.zeros((note_samp_len*note_total,))
+    
     # Take single dimension to simplify dual-channel recording
     melody_single_ch = melody[:,1]
     
