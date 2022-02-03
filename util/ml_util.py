@@ -20,30 +20,34 @@ import os
 import sys
 from time import perf_counter
 
+from python_speech_features import logfbank
+
 # Add custom modules to path
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
     
-from util import AUDIO_FOLDER, DATA_FOLDER, MODEL_FOLDER
+from util import AUDIO_FOLDER
 
 #%% Define constants
 
-train_type = 'hum' # hard-coded for now, may grow in the future
+TRAIN_TYPE = 'hum' # hard-coded for now, may grow in the future
 
 training_data = {
-        'D3': os.path.join(AUDIO_FOLDER, train_type, "{}_D3.wav".format(train_type)),
-        'E3': os.path.join(AUDIO_FOLDER, train_type, "{}_E3.wav".format(train_type)),
-        'F3': os.path.join(AUDIO_FOLDER, train_type, "{}_F3.wav".format(train_type)),
-        'G3': os.path.join(AUDIO_FOLDER, train_type, "{}_G3.wav".format(train_type)),
-        'A3': os.path.join(AUDIO_FOLDER, train_type, "{}_A3.wav".format(train_type)),
-        'C4': os.path.join(AUDIO_FOLDER, train_type, "{}_C4.wav".format(train_type)),
-        'D4': os.path.join(AUDIO_FOLDER, train_type, "{}_D4.wav".format(train_type)),
-        'E4': os.path.join(AUDIO_FOLDER, train_type, "{}_E4.wav".format(train_type)),
-        'F4': os.path.join(AUDIO_FOLDER, train_type, "{}_F4.wav".format(train_type)),
-        'G4': os.path.join(AUDIO_FOLDER, train_type, "{}_G4.wav".format(train_type)),
-        'A4': os.path.join(AUDIO_FOLDER, train_type, "{}_A4.wav".format(train_type))
+        'D3': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_D3.wav".format(TRAIN_TYPE)),
+        'E3': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_E3.wav".format(TRAIN_TYPE)),
+        'F3': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_F3.wav".format(TRAIN_TYPE)),
+        'G3': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_G3.wav".format(TRAIN_TYPE)),
+        'A3': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_A3.wav".format(TRAIN_TYPE)),
+        'C4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_C4.wav".format(TRAIN_TYPE)),
+        'D4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_D4.wav".format(TRAIN_TYPE)),
+        'E4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_E4.wav".format(TRAIN_TYPE)),
+        'F4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_F4.wav".format(TRAIN_TYPE)),
+        'G4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_G4.wav".format(TRAIN_TYPE)),
+        'A4': os.path.join(AUDIO_FOLDER, TRAIN_TYPE, "{}_A4.wav".format(TRAIN_TYPE))
 }
+
+TRAIN_T_LEN_SEC = 2.5
 
 #%%
 # Usage: X_train = feat_extract(data, fs, freq_dict, feat_notes)
@@ -55,9 +59,7 @@ def feat_extract(data, fs, freq_dict, feat_notes, debug=False):
     t1_start = perf_counter()
     
     #-------------
-    #TODO - redo with MFCCs?
     # from python_speech_features import mfcc
-    from python_speech_features import logfbank
 
     # mfcc_feat = mfcc(data[0,:], fs, nfft=1200)
     # fbank_feat = logfbank(data[0,:], fs, nfft=1200)
@@ -108,7 +110,7 @@ def feat_extract(data, fs, freq_dict, feat_notes, debug=False):
         
     if debug:
         t1_stop = perf_counter()
-        print("Feature extraction processing time = {:.3f}".format(t1_stop-t1_start))
+        print("Feature extraction processing time = {:.2f}".format(t1_stop-t1_start))
         
     # Return features   
     # return pd.DataFrame(features, columns=feat_notes)
@@ -136,9 +138,16 @@ class signals(signal):
             
 #%%
 
+def signal_t_extract(signal, fs):
+    # For now make simplifying assumption to take first n samples
+    # Eventually generalize based on rise/fall time
+    t_len = TRAIN_T_LEN_SEC # seconds
+    train_samp_len = int(t_len*fs)
+    return signal[:train_samp_len]
+
 def load_training_data(notes = ('C4', 'D4', 'E4')):
 
-    t_len = 2.5 # seconds
+    t_len = TRAIN_T_LEN_SEC # seconds
     
     # Define hum_training object based on input list of notes
     training_data = signals(notes)
@@ -149,16 +158,17 @@ def load_training_data(notes = ('C4', 'D4', 'E4')):
     # Number of notes
     n_class = training_data.notes
     
-    # Enforce consistent length of inputs. Should be integrated with t_len
-    train_len = int(t_len*fs) #130000 # in ms
-    X = np.empty((n_class, train_len))
+    # Enforce consistent length of inputs
+    train_samp_len = int(t_len*fs)
+    X = np.empty((n_class, train_samp_len))
     
     # Initialize truth labels
     y=[]
     
     # Build truth labels and create hums matrix
     for idx, note in enumerate(notes): 
-        X[idx,:] = training_data.signals[note].signal[:train_len,1]
+        # X[idx,:] = training_data.signals[note].signal[:train_samp_len,1]
+        X[idx,:] = signal_t_extract(training_data.signals[note].signal[:,1], fs)
         y.append(note)
     
     return X, y, fs

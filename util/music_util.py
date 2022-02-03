@@ -152,44 +152,64 @@ def add_timeshifts(in_array, samp_shift_max=100, debug=False):
 # fs, wav_signal = wav.read(hum_wav_file)
 # predicted_notes = melody_transcribe(melody=wav_signal, fs, model, note_len, SCALE)
 
-def melody_transcribe(melody, fs, model, note_samp_len, scale, xgb_encoder=None, debug=False):
+from util.ml_util import signal_t_extract, TRAIN_T_LEN_SEC
+
+def melody_transcribe(melody, fs, model, scale, xgb_encoder=None, debug=False):
     
     # Estimate note_total by rounding the input note_len to length of input melody
-    note_total = np.int(np.floor(melody.shape[0]/note_samp_len))
-    if debug:
-        print('note_total = {}'.format(note_total))
-        print('melody.shape = {}'.format(melody.shape))
-        print('note_samp_len = {}'.format(note_samp_len))
     
-    # Pad melody array so length is consistent
-    melody_clean = np.zeros((note_samp_len*note_total,))
+    # # Pad melody array so length is consistent
+    # melody_clean = np.zeros((note_samp_len*note_total,))
     
-    # Take single dimension to simplify dual-channel recording
-    melody_single_ch = melody[:,1]
+    # # Take single dimension to simplify dual-channel recording
+    # melody_single_ch = melody[:,1]
     
-    if len(melody_single_ch)<=len(melody_clean):
-        melody_clean[:len(melody)] = melody_single_ch
-    else:
-        if debug:
-            print('len(melody_single_ch) = {}'.format(len(melody_single_ch)))
-        # Truncate melody if longer than expected
-        note_samp_to_drop = np.int((len(melody_single_ch) - len(melody_clean))/note_total)
-        if debug:
-            print('note_samp_to_drop = {}'.format(note_samp_to_drop))
-        note_input_len = np.int(round(len(melody_single_ch)/note_total))
-        for note_idx in range(note_total):
-            try:
-                melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
-                    melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop]
-            except:
-                # Account for odd rounding
-                melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
-                    melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop-1]
+    # if len(melody_single_ch)<=len(melody_clean):
+    #     melody_clean[:len(melody)] = melody_single_ch
+    # else:
+    #     if debug:
+    #         print('len(melody_single_ch) = {}'.format(len(melody_single_ch)))
+    #     # Truncate melody if longer than expected
+    #     note_samp_to_drop = np.int((len(melody_single_ch) - len(melody_clean))/note_total)
+    #     if debug:
+    #         print('note_samp_to_drop = {}'.format(note_samp_to_drop))
+    #     note_input_len = np.int(round(len(melody_single_ch)/note_total))
+    #     for note_idx in range(note_total):
+    #         try:
+    #             melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
+    #                 melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop]
+    #         except:
+    #             # Account for odd rounding
+    #             melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)] = \
+    #                 melody_single_ch[note_input_len*note_idx:note_input_len*(note_idx+1)-note_samp_to_drop-1]
     
+    # # Initialize matrix of notes
+    # notes = np.empty((note_total, note_samp_len))
+    # for note_idx in range(note_total):
+    #     notes[note_idx,:] = melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)]
+
+    note_samp_len = np.int(TRAIN_T_LEN_SEC*fs)     
+    note_total = np.int(np.round(melody.shape[0]/note_samp_len))
+
     # Initialize matrix of notes
     notes = np.empty((note_total, note_samp_len))
+    
+    if debug:
+        print('note_total = {} (not currently used)'.format(note_total))
+        print('melody.shape = {}'.format(melody.shape))
+        print('note_samp_len = {}'.format(note_samp_len))
+        
+    # # Take single dimension to simplify dual-channel recording
+    melody = melody[:,1]
+    
+    # Simplifying assumption to evenly space out start indices
+    # Eventually generalize to find rapid rise times
+    start_indexes = np.arange(note_total)*note_samp_len
+    
     for note_idx in range(note_total):
-        notes[note_idx,:] = melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)]
+        notes[note_idx,:] = signal_t_extract(melody[start_indexes[note_idx]:], fs)
+        # notes[note_idx,:] = melody_clean[note_samp_len*note_idx:note_samp_len*(note_idx+1)]
+
 
     X_feat = feat_extract(notes, fs, note_to_freq, scale)
     
@@ -274,8 +294,8 @@ def melody_rec_write(model, scale, note_total=2, note_len_time=2, file_name=REC_
                      xgb_encoder=None, debug=False):
         _ = melody_record(note_total=note_total, note_len_time=note_len_time, file_name=file_name)
         fs, wav_signal = wav.read(file_name)
-        predictions = melody_transcribe(wav_signal, fs, model, 
-                                        note_len_time*fs, scale, 
+        predictions = melody_transcribe(wav_signal, fs, 
+                                        model, scale, 
                                         xgb_encoder=xgb_encoder,debug=debug)
         melody_predict = Melody(notes=predictions)
         return melody_predict
